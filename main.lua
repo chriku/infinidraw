@@ -1,4 +1,6 @@
-debug.setmetatable(_G,{__index=function(self,k) error("NOPEI: "..tostring(k),2) end,__newindex=function(self,k) print("NOPEN: "..tostring(k),2) error("NOPEN: "..tostring(k),2) end})
+if jit then
+  debug.setmetatable(_G,{__index=function(self,k) error("NOPEI: "..tostring(k),2) end,__newindex=function(self,k) print("NOPEN: "..tostring(k),2) error("NOPEN: "..tostring(k),2) end})
+end
 local lgi=require"lgi"
 local Gtk=lgi.require("Gtk","3.0")
 local Gdk=lgi.require("Gdk")
