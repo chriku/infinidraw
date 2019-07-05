@@ -8,13 +8,14 @@ local G=lgi.require("GLib")
 local cairo=lgi.require"cairo"
 local window = Gtk.Window{title="InfiniDRAW",on_destroy=Gtk.main_quit,default_width=500,default_height=500}
 local area=Gtk.DrawingArea{}
-local image_h=1000
+local image_h=1500
+local image_w=1366
 local images={}
-local scroll=0
+local scroll=1
 local function get_image(y)
   y=math.floor(y/image_h)
   if not images[y] then
-    images[y]={image=cairo.ImageSurface.create(0,1920,image_h)}
+    images[y]={image=cairo.ImageSurface.create(0,image_w,image_h)}
     local paint_cr=cairo.Context.create(images[y].image)
     paint_cr:set_source_rgb(255,255,255)
     paint_cr:paint()
@@ -26,34 +27,34 @@ local last_mouse_pos
 local tool
 function area:on_draw(cr)
   --print(area.width)
-  local si=math.ceil(scroll/image_h)
-  for i=si-1,si+1 do
+  local si=math.floor(scroll/image_h)+1
+  for i=si,si+1 do
     cr:identity_matrix()
-    cr:scale(area.width/1920,area.width/1920)
+    cr:scale(area.width/1366,area.width/1366)
     local y=((i-1)*image_h)-scroll
     cr:translate(0,y)
     cr:set_source_surface(get_image(y+(si*image_h)).image,0,0)
-    cr:paint()
+    cr:rectangle(0,0,1366,image_h)
+    cr:fill()
   end
   cr:identity_matrix()
   cr:set_source_rgba(0,0,0,0.5)
-  cr:scale(area.width/1920,area.width/1920)
+  cr:scale(area.width/1366,area.width/1366)
   cr:translate(0,math.fmod(-scroll,image_h)-image_h)
   local grid_space=30
   for y=0,image_h*3,grid_space do
     cr:move_to(0,y)
-    cr:line_to(1920,y)
+    cr:line_to(1366,y)
     cr:stroke()
   end
-  cr:identity_matrix()
-  for x=0,1920,grid_space do
+  for x=0,1366,grid_space do
     cr:move_to(x,0)
-    cr:line_to(x,image_h)
+    cr:line_to(x,image_h*3)
     cr:stroke()
   end
   local function a()
     cr:identity_matrix()
-    cr:scale(area.width/1920,area.width/1920)
+    cr:scale(area.width/1366,area.width/1366)
     cr:translate(0,-scroll)
     local r=10
     if tool=="draw" then r=3 end
@@ -73,7 +74,7 @@ function area:on_draw(cr)
   end
 end
 local function save()
-  local img=cairo.ImageSurface.create(0,1920,(1+#images)*image_h)
+  local img=cairo.ImageSurface.create(0,1366,(1+#images)*image_h)
   local cr=cairo.Context.create(img)
   for i,img in pairs(images) do
     cr:identity_matrix()
@@ -111,7 +112,7 @@ do
       end
     end
     if state.BUTTON1_MASK and state.BUTTON3_MASK then
-      scroll=math.max(scroll-(this.ry-last.ry),0)
+      scroll=math.max(scroll-(this.ry-last.ry),1)
     elseif state.BUTTON1_MASK and state.BUTTON2_MASK then
       tool="erase"
       dd(function(cr)
@@ -129,8 +130,8 @@ do
   end
   f=function(area,event)
     area:grab_focus()
-    local x=event.x/(area.width/1920)
-    local y=event.y/(area.width/1920)
+    local x=event.x/(area.width/1366)
+    local y=event.y/(area.width/1366)
     local t={x=x,y=y+scroll,ry=y}
     tool=nil
     if last_mouse_pos then
